@@ -102,6 +102,29 @@
     text-shadow:0 2px 8px rgba(0,0,0,.8);letter-spacing:.08em;animation:flab .9s ease-out forwards;white-space:nowrap}
   @keyframes flab{0%{opacity:0;transform:translate(-50%,-30%) scale(.8)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%) scale(1.05)}}
 
+  /* уровень + разница */
+  .levelband{display:flex;align-items:stretch;gap:12px;margin:0 2px 10px}
+  .lvlbadge{flex:none;min-width:94px;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    background-color:#1b1e22;background-image:linear-gradient(180deg,#23272c,#191c1f);border:1px solid var(--line2);border-radius:14px;padding:9px 12px}
+  .lvlbadge .lvlk{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .lvlbadge .lvlnum{font-family:var(--serif);font-weight:600;font-size:30px;line-height:1;color:#fff;margin-top:3px}
+  .lvlbadge.wide{min-width:124px}
+  .lvlbadge.wide .lvlnum{font-size:18px;letter-spacing:.02em}
+  .diffmeter{flex:1;display:flex;flex-direction:column;justify-content:center;gap:7px;background-color:#1b1e22;
+    background-image:linear-gradient(180deg,#21252a,#191c1f);border:1px solid var(--line);border-radius:14px;padding:10px 14px;min-width:0}
+  .diffmeter .dm-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .diffmeter .dm-word{font-size:13.5px;color:var(--ink);font-weight:600}
+  .diffmeter .dm-d{font-family:var(--mono);font-size:10.5px;color:var(--accent);white-space:nowrap}
+  .diffmeter .dm-track{position:relative;height:9px;border-radius:99px;background-color:#2a2f35}
+  .diffmeter .dm-track i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background-image:linear-gradient(90deg,#3a8f84,#e7c06a 70%,#e4837a);transition:width .4s}
+  .diffmeter .dm-track b{position:absolute;top:-3px;width:3px;height:15px;background-color:#fff;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px rgba(0,0,0,.4);transition:left .4s;z-index:2}
+  .diffmeter .dm-ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--faint);text-transform:uppercase}
+  .labrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .qbtn{flex:none;width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);background-color:transparent;color:var(--muted);
+    font-family:var(--mono);font-size:11px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+  .qbtn:hover{color:var(--accent);border-color:var(--accent-dim)}
+  .cav{margin-top:9px;font-size:10.5px;color:var(--faint);line-height:1.4}
+
   /* ---------- ПАНЕЛЬ ---------- */
   .panel{background-color:#1b1e22;background-image:linear-gradient(180deg,var(--panel),#191c1f);border:1px solid var(--line);
     border-radius:var(--r);padding:16px 16px 18px;box-shadow:0 18px 40px -28px rgba(0,0,0,.9)}
@@ -278,9 +301,13 @@
   <!-- ИГРА -->
   <section class="layout hidden" id="game">
     <div class="stage">
-      <div class="matlabel">
-        <span id="phaseLbl">Поле</span>
-        <span>Разница <span class="delta" id="deltaLbl">Δ 0.055</span></span>
+      <div class="levelband">
+        <div class="lvlbadge" id="lvlBadge"><span class="lvlk" id="lvlKind">Уровень</span><span class="lvlnum" id="lvlNum">1</span></div>
+        <div class="diffmeter">
+          <div class="dm-top"><span class="dm-word" id="diffWord">заметная разница</span><span class="dm-d" id="deltaLbl">Δ 0.055 · тонкость 0%</span></div>
+          <div class="dm-track"><i id="diffFill"></i><b id="diffMark"></b></div>
+          <div class="dm-ends"><span>заметная</span><span>на пределе зрения</span></div>
+        </div>
       </div>
       <div class="boardwrap">
         <div class="board" id="board"></div>
@@ -290,10 +317,11 @@
     </div>
     <aside>
       <div class="panel">
-        <div class="lab">Цветов различаешь</div>
+        <div class="lab labrow">Цветов различаешь<button class="qbtn" id="howCalc" aria-label="как считается">?</button></div>
         <div class="big" id="colorsNum">— </div>
-        <div class="sub">из <b>10 000 000</b> возможных для человека</div>
+        <div class="sub" id="colorsSub">оценка по твоему порогу</div>
         <div class="bar"><i id="colorsBar"></i></div>
+        <div class="cav">оценка, не клинический тест · зависит от экрана и освещения</div>
       </div>
       <div class="panel" id="statusCard"></div>
       <div class="panel">
@@ -341,7 +369,7 @@ function hueBin(deg){var bi=0,bd=999;HUES.forEach(function(H,i){var dd=angDist(d
 function hslCss(deg){return "hsl("+deg+" 52% 56%)";}
 
 /* ===================== константы ===================== */
-var ROWS=8,COLS=8,BASE_DIST=0.055,DECAY=0.88,FLOOR=0.006,TARGET=5;
+var ROWS=8,COLS=8,BASE_DIST=0.055,DECAY=0.88,FLOOR=0.005,TARGET=5;
 var LADDER=[];(function(){var n=24;for(var i=0;i<n;i++)LADDER.push(BASE_DIST*Math.pow(FLOOR/BASE_DIST,i/(n-1)));})();
 var CAL={revNeed:8,maxTrials:26,coarse:2,fineAfter:2};
 var MODES={
@@ -504,33 +532,46 @@ function onError(){
 function resolvedDist(){var best=null,easiest=null;distBuckets.forEach(function(v,k){var d=parseFloat(k);
   if(easiest===null||d>easiest)easiest=d;if(v.att>=3&&v.suc/v.att>=0.7){if(best===null||d<best)best=d;}});
   return best!==null?best:(easiest!==null?easiest:BASE_DIST);}
-function estColors(d){var K=21500,p=-1.34;return Math.max(200000,Math.min(10000000,Math.round(K*Math.pow(d,p))));}
+/* Число различимых цветов из порога Δ — метод «объём ÷ JND».
+   Различимых цветов ≈ объём видимых цветов / объём одной «ячейки» порога.
+   В перцептивно равномерном OKLab это даёт закон ~1/Δ³ (трёхмерный объём).
+   Якорь: средний наблюдатель ≈ 2,3 млн различимых поверхностных цветов
+   при пороге COLOR_ANCHOR_D (Pointer & Attridge, 1998). Потолок мягкий — число
+   может уходить выше «человеческого» диапазона, жёсткого предела 10 млн больше нет. */
+var COLOR_ANCHOR_E=2300000,COLOR_ANCHOR_D=0.013,COLOR_C=COLOR_ANCHOR_E*Math.pow(COLOR_ANCHOR_D,3);
+function estColors(d){if(!(d>0))return 500000000;var n=COLOR_C/Math.pow(d,3);return Math.max(5000,Math.min(500000000,Math.round(n)));}
+function roundSig(n,s){if(!(n>0))return 0;var dg=Math.ceil(Math.log10(n)),p=s-dg,f=Math.pow(10,p);return Math.round(n*f)/f;}
 function sessionAcc(){var a=0,s=0;hueStats.forEach(function(h){a+=h.att;s+=h.suc;});return a?s/a:0;}
 
 /* ===================== сравнительная статистика ===================== */
 function percentileFor(E){
-  var A=[[200000,8],[500000,25],[1000000,50],[1800000,75],[2800000,88],[4000000,95],[5500000,98],[7000000,99.2],[8500000,99.7],[10000000,99.9]];
+  /* Якоря привязаны к реальным данным: нижний хвост — распространённость
+     наследственных нарушений цветовосприятия (~8% мужчин / ~0,5% женщин);
+     медиана 50% — оценка ~2,3 млн различимых поверхностных цветов (Pointer & Attridge, 1998). */
+  var A=[[100000,3],[300000,8],[700000,20],[1200000,35],[2300000,50],[3500000,68],[5000000,84],[7000000,93],[10000000,97.5],[20000000,99.4],[50000000,99.9]];
   if(E<=A[0][0])return A[0][1];if(E>=A[A.length-1][0])return A[A.length-1][1];
   for(var i=0;i<A.length-1;i++){if(E>=A[i][0]&&E<=A[i+1][0]){var t=(Math.log(E)-Math.log(A[i][0]))/(Math.log(A[i+1][0])-Math.log(A[i][0]));return A[i][1]+t*(A[i+1][1]-A[i][1]);}}
   return 50;}
 function tierFor(E){
-  if(E>=9000000)return{title:"Предел человеческого зрения",fact:"Дальше — только тетрахроматы и хищные птицы: они видят ультрафиолет, недоступный человеку."};
-  if(E>=7000000)return{title:"Зрение уровня единиц",fact:"Хищные птицы — тетрахроматы; в их мире оттенков больше, чем доступно человеку."};
-  if(E>=5000000)return{title:"Глаз профессионала цвета",fact:"Колористы и ретушёры годами тренируют именно такое различение полутонов."};
-  if(E>=3000000)return{title:"Острее среднего",fact:"Типичный человек уверенно различает около миллиона оттенков — ты заметно выше."};
-  if(E>=1500000)return{title:"Уверенная норма",fact:"Это здоровое цветовое зрение среднего человека."};
-  if(E>=900000)return{title:"В пределах нормы",fact:"Около 8% мужчин и 0.5% женщин различают меньше — у тебя норма."};
-  return{title:"Пока ниже типичного",fact:"Это тренируется: различение полутонов растёт с практикой."};}
-var TOPFACTS=["Хищные птицы — тетрахроматы и видят ультрафиолет: оттенков в их мире больше, чем доступно человеку.",
-  "У рака-богомола 12–16 типов рецепторов, но различает он грубее человека — рекордсмен не по тонкости.",
-  "Редкие люди-тетрахроматы (почти всегда женщины) теоретически видят оттенков в разы больше."];
-function statHeadline(E){var p=percentileFor(E);if(p>=99)return "ТОП "+(100-p).toFixed(1)+"% ПО ОСТРОТЕ ЦВЕТА";return "ТОНЬШЕ ~"+Math.round(p)+"% ЛЮДЕЙ";}
-function statFact(E){var t=tierFor(E);if(E>=5000000)return TOPFACTS[level%TOPFACTS.length];return t.fact;}
-function scalePos(E){return clamp((Math.log(E)-Math.log(200000))/(Math.log(10000000)-Math.log(200000))*100,2,98);}
+  if(E>=12000000)return{title:"Исключительная острота",fact:"Это выше типичного человеческого диапазона. Функциональная тетрахромия (4 типа колбочек) у людей редка и обсуждается; задокументированный случай описан Jordan et al., 2010."};
+  if(E>=7000000)return{title:"Уровень профессионала цвета",fact:"Так различают цвет натренированные колористы и ретушёры. Для сравнения: многие птицы — тетрахроматы и видят оттенки (вкл. ультрафиолет), недоступные человеку."};
+  if(E>=4000000)return{title:"Выше типичного — острый глаз",fact:"Заметно выше среднего. Строгая оценка различимых поверхностных цветов у среднего наблюдателя — около 2,3 млн (Pointer & Attridge, 1998)."};
+  if(E>=1200000)return{title:"Типичное цветовое зрение",fact:"Нормальная трихроматия: у человека три типа колбочек (S, M, L). Оценки числа различимых цветов варьируются от ~1 до ~10 млн в зависимости от метода."};
+  if(E>=300000)return{title:"Ниже типичного диапазона",fact:"Различение полутонов ниже среднего. На результат сильно влияют калибровка экрана и освещение — это не клинический тест."};
+  return{title:"Возможно, сниженное цветоразличение",fact:"Наследственное нарушение цветовосприятия есть примерно у 8% мужчин и 0,5% женщин (чаще красно-зелёное, X-сцепленное). Точную проверку делают по тесту Ишихары или аномалоскопу."};}
+var TOPFACTS=["Многие птицы, рептилии и рыбы — тетрахроматы: 4-й тип рецептора (часто УФ) даёт им оттенки, недоступные человеку.",
+  "У рака-богомола 12–16 типов фоторецепторов, но близкие длины волн он различает грубее человека (Thoen et al., 2014): больше рецепторов ≠ тоньше различение.",
+  "Строгая оценка для среднего наблюдателя — около 2,3 млн различимых поверхностных цветов (Pointer & Attridge, 1998)."];
+function statHeadline(E){var p=percentileFor(E);
+  if(p>=99)return "ВЕРХНИЕ ~"+(100-p).toFixed(1)+"% ПО ОСТРОТЕ ЦВЕТА";
+  if(p>=50)return "ТОЧНЕЕ ~"+Math.round(p)+"% ЛЮДЕЙ";
+  return "≈ "+Math.round(p)+"-Й ПРОЦЕНТИЛЬ ОСТРОТЫ";}
+function statFact(E){if(E>=5000000)return TOPFACTS[Math.floor(Math.random()*TOPFACTS.length)];return tierFor(E).fact;}
+function scalePos(E){return clamp((Math.log(E)-Math.log(100000))/(Math.log(20000000)-Math.log(100000))*100,2,98);}
 function scaleHTML(E){
   return '<div class="scale"><div class="track"></div>'+
-    '<div class="tick" style="left:'+scalePos(1000000).toFixed(1)+'%"><i></i><span>среднее ≈ 1 млн</span></div>'+
-    '<div class="tick" style="left:98%"><i></i><span>предел 10 млн</span></div>'+
+    '<div class="tick" style="left:'+scalePos(2300000).toFixed(1)+'%"><i></i><span>среднее ≈ 2,3 млн</span></div>'+
+    '<div class="tick" style="left:98%"><i></i><span>редкая острота · 10 млн+</span></div>'+
     '<div class="marker" style="left:'+scalePos(E).toFixed(1)+'%"><b>ТЫ</b></div></div>';}
 function hueRecapHTML(){
   var strong=null,weak=null,sb=-1,wb=2;
@@ -541,7 +582,7 @@ function hueRecapHTML(){
     '<div class="chip"><span class="sw" style="background:'+hslCss(HUES[weak].deg)+'"></span>сложнее: '+HUES[weak].name+'</div></div>';}
 
 /* ===================== бот ===================== */
-function botSay(){var colors=estColors(resolvedDist());var strong=null,weak=null,sb=-1,wb=2;
+function botSay(){var colors=roundSig(estColors(resolvedDist()),3);var strong=null,weak=null,sb=-1,wb=2;
   hueStats.forEach(function(h,i){if(h.att>=3){var r=h.suc/h.att;if(r>sb){sb=r;strong=i;}if(r<wb){wb=r;weak=i;}}});
   var msg;
   if(calMode){msg="Калибрую: подбираю разницу Δ, на которой ты различаешь уверенно. Точек разворота: "+calRevs.length+" из "+CAL.revNeed+".";}
@@ -605,15 +646,36 @@ function renderStatus(){var el=document.getElementById("statusCard");
   }
 }
 function updateUI(){
-  document.getElementById("deltaLbl").textContent="Δ "+dist.toFixed(3);
-  var phase=(mode==="personal"&&calMode)?"Калибровка":(mode==="personal"?"Тренировка":"Режим: "+MODES[mode].name.toLowerCase());
-  document.getElementById("phaseLbl").textContent=phase;
+  updateBand();
   document.getElementById("hintCnt").textContent=hintsLeft;
   document.getElementById("hintBtn").disabled=hintsLeft<=0||calMode;
-  if(calMode){document.getElementById("colorsNum").textContent="···";shownColors=0;document.getElementById("colorsBar").style.width="0%";}
-  else{var colors=estColors(resolvedDist());animateNumber(document.getElementById("colorsNum"),colors);
-    document.getElementById("colorsBar").style.width=(colors/10000000*100)+"%";}
+  var cn=document.getElementById("colorsNum"),cb=document.getElementById("colorsBar"),cs=document.getElementById("colorsSub");
+  if(calMode){cn.textContent="···";shownColors=0;cb.style.width="0%";if(cs)cs.textContent="идёт калибровка";}
+  else{
+    var raw=estColors(resolvedDist());
+    animateNumber(cn,roundSig(raw,3));
+    var fill=clamp((Math.log(raw)-Math.log(100000))/(Math.log(20000000)-Math.log(100000))*100,0,100);
+    cb.style.width=fill+"%";
+    if(cs){if(raw>=COLOR_ANCHOR_E)cs.innerHTML="≈ <b>"+(raw/COLOR_ANCHOR_E).toFixed(1).replace(".",",")+"×</b> среднего человека";
+      else cs.innerHTML="≈ <b>"+Math.round(raw/COLOR_ANCHOR_E*100)+"%</b> от среднего (≈ 2,3 млн)";}
+  }
   renderStatus();renderHues();
+}
+function updateBand(){
+  var kind,num,wide=false;
+  if(calMode){kind="";num="Калибровка";wide=true;}
+  else if(mode==="personal"){kind="";num="Тренировка";wide=true;}
+  else{kind="Уровень";num=String(level);wide=false;}
+  var badge=document.getElementById("lvlBadge");if(badge)badge.classList.toggle("wide",wide);
+  var lk=document.getElementById("lvlKind"),ln=document.getElementById("lvlNum");
+  if(lk){lk.textContent=kind;lk.style.display=kind?"":"none";}
+  if(ln)ln.textContent=num;
+  var fine=clamp((Math.log(BASE_DIST)-Math.log(dist))/(Math.log(BASE_DIST)-Math.log(FLOOR))*100,0,100);
+  var word=fine<20?"заметная разница":fine<45?"тонкая разница":fine<70?"очень тонкая разница":fine<90?"у предела зрения":"на пределе экрана";
+  var dw=document.getElementById("diffWord");if(dw)dw.textContent=word;
+  var dl=document.getElementById("deltaLbl");if(dl)dl.textContent="Δ "+dist.toFixed(3)+" · тонкость "+Math.round(fine)+"%";
+  var df=document.getElementById("diffFill");if(df)df.style.width=fine+"%";
+  var dm=document.getElementById("diffMark");if(dm)dm.style.left=fine+"%";
 }
 function renderHues(){var el=document.getElementById("hues");
   el.innerHTML=HUES.map(function(H,i){var h=hueStats[i],rate=h.att>0?h.suc/h.att:0,nd=h.att===0?" nodata":"";
@@ -633,7 +695,7 @@ function showReveal(){var E=estColors(resolvedDist()),t=tierFor(E);
   var el=document.getElementById("reveal");
   el.innerHTML='<div class="rhead">'+statHeadline(E)+'</div><div class="rtier">Уровень '+level+' · '+t.title+'</div>'+
     '<div class="rfact">'+statFact(E)+'</div>'+
-    '<div class="rnums"><span>≈ <b>'+fmt(E)+'</b> цветов</span><span>порог <b>Δ '+resolvedDist().toFixed(3)+'</b></span></div>';
+    '<div class="rnums"><span>≈ <b>'+fmt(roundSig(E,3))+'</b> цветов</span><span>порог <b>Δ '+resolvedDist().toFixed(3)+'</b></span></div>';
   el.classList.add("show");clearTimeout(revealTimer);revealTimer=setTimeout(function(){el.classList.remove("show");},3400);}
 function hideReveal(){var el=document.getElementById("reveal");el.classList.remove("show");clearTimeout(revealTimer);}
 
@@ -663,7 +725,7 @@ function finishCalibration(){
   var E=estColors(trainingDist),t=tierFor(E);
   openModal('<h2>Калибровка завершена</h2><div class="gsub">'+calTrials+' проб · '+calRevs.length+' разворотов</div>'+
     '<p class="lede">Я подобрал разницу оттенков, на которой ты различаешь примерно в 70% случаев — это твой текущий порог.</p>'+
-    '<div class="hero"><div class="bignum">'+fmt(E)+'</div><span class="sub">цветов · порог Δ '+trainingDist.toFixed(3)+'</span></div>'+
+    '<div class="hero"><div class="bignum">'+fmt(roundSig(E,3))+'</div><span class="sub">цветов · порог Δ '+trainingDist.toFixed(3)+'</span></div>'+
     '<div class="gostat"><div class="h">'+statHeadline(E)+'</div><div class="t">'+t.title+'</div></div>'+
     scaleHTML(E)+
     '<div class="rfact2">'+t.fact+'</div>'+
@@ -684,7 +746,7 @@ function personalEntry(){
     var idx=nearestIdx(saved.dist),E=estColors(LADDER[idx]);
     openModal('<h2>Персональная тренировка</h2><div class="gsub">порог уже измерен</div>'+
       '<p class="lede">Продолжить тренировку с сохранённым порогом или измерить зрение заново?</p>'+
-      '<div class="hero"><div class="bignum" style="font-size:34px">Δ '+LADDER[idx].toFixed(3)+'</div><span class="sub">≈ '+fmt(E)+' цветов</span></div>'+
+      '<div class="hero"><div class="bignum" style="font-size:34px">Δ '+LADDER[idx].toFixed(3)+'</div><span class="sub">≈ '+fmt(roundSig(E,3))+' цветов</span></div>'+
       '<div class="btnrow"><button class="go" id="contGo">Продолжить</button><button class="go sec" id="recalGo">Калибровка</button></div>',false);
     var c=document.getElementById("contGo"),r=document.getElementById("recalGo");
     if(c)c.onclick=function(){closeModal();trainingIdx=idx;trainingDist=LADDER[idx];beginTraining();};
@@ -708,7 +770,7 @@ function buildGameOverHTML(kind,lbHtml){
   var E=estColors(resolvedDist()),t=tierFor(E),acc=Math.round(sessionAcc()*100);
   var titles={errors:"5 ошибок — забег окончен",time:"Время вышло",end:"Готово"};
   return '<h2>'+(titles[kind]||"Готово")+'</h2><div class="gsub">режим: '+MODES[mode].name+'</div>'+
-    '<div class="hero"><div class="bignum">'+fmt(E)+'</div><span class="sub">цветов различаешь · порог Δ '+resolvedDist().toFixed(3)+'</span></div>'+
+    '<div class="hero"><div class="bignum">'+fmt(roundSig(E,3))+'</div><span class="sub">цветов различаешь · порог Δ '+resolvedDist().toFixed(3)+'</span></div>'+
     '<div class="gostat"><div class="h">'+statHeadline(E)+'</div><div class="t">'+t.title+'</div></div>'+
     scaleHTML(E)+
     '<div class="rfact2">'+statFact(E)+'</div>'+
@@ -744,7 +806,7 @@ function bestFor(m){return safeGet("ottenok_best_"+m);}
 function saveBest(m,run){var cur=bestFor(m);if(!cur||run.level>cur.level||(run.level===cur.level&&run.score>cur.score))safeSet("ottenok_best_"+m,{level:run.level,score:run.score});}
 function refreshBests(){
   var p=safeGet("ottenok_personal_threshold"),pe=document.getElementById("best-personal");
-  if(p&&typeof p.dist==="number"){pe.classList.remove("empty");pe.textContent="порог Δ "+p.dist.toFixed(3)+" · ≈"+fmt(estColors(p.dist))+" цветов";}
+  if(p&&typeof p.dist==="number"){pe.classList.remove("empty");pe.textContent="порог Δ "+p.dist.toFixed(3)+" · ≈"+fmt(roundSig(estColors(p.dist),3))+" цветов";}
   else{pe.classList.add("empty");pe.textContent="калибровка не пройдена";}
   ["endless","time"].forEach(function(m){var el=document.getElementById("best-"+m),b=bestFor(m);
     if(b){el.classList.remove("empty");el.textContent="рекорд · уровень "+b.level+" · "+fmt(b.score);}
@@ -772,6 +834,17 @@ var HOW='<h2>Натренируй свой глаз</h2><p class="lede">Чело
 function openHow(){openModal(HOW,true);var b=document.getElementById("howClose");if(b)b.onclick=closeModal;}
 document.getElementById("howBtn").addEventListener("click",openHow);
 document.getElementById("howBtn2").addEventListener("click",openHow);
+
+var HOWCALC='<h2>Как это считается</h2><p class="lede">Откуда берётся число различимых цветов.</p>'+
+  '<div class="steps">'+
+  '<div class="step"><div class="n">1</div><p>Игра измеряет твой <b>порог различения Δ</b> — наименьшую разницу цвета в перцептивно равномерном пространстве <b>OKLab</b>, при которой ты ещё надёжно (~75%) отличаешь плитки.</p></div>'+
+  '<div class="step"><div class="n">2</div><p>Число различимых цветов ≈ <b>объём всех видимых цветов ÷ объём одной «ячейки» порога</b>. Тоньше порог — больше ячеек — больше цветов. Тот же принцип (деление на размер едва заметного различия, JND) лежит в основе научных оценок.</p></div>'+
+  '<div class="step"><div class="n">3</div><p>За «средний» ориентир взята строгая оценка ~<b>2,3 млн</b> различимых поверхностных цветов (Pointer &amp; Attridge, 1998).</p></div>'+
+  '</div>'+
+  '<p class="mini" style="text-align:left">Это тренировочная метрика, а не клинический тест. Результат сильно зависит от калибровки экрана, освещения и расстояния. Плитки меняются по оттенку при фиксированной светлоте, поэтому число — экстраполяция, а не прямой подсчёт. Точную проверку зрения делают по тесту Ишихары или аномалоскопу.</p>'+
+  '<button class="go" id="hcClose">Понятно</button>';
+function openHowCalc(){openModal(HOWCALC,true);var b=document.getElementById("hcClose");if(b)b.onclick=closeModal;}
+var hcBtn=document.getElementById("howCalc");if(hcBtn)hcBtn.addEventListener("click",openHowCalc);
 
 /* ===================== экраны ===================== */
 function showScreen(s){var menu=document.getElementById("menu"),game=document.getElementById("game"),acts=document.getElementById("topActions");
