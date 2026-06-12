@@ -2,9 +2,15 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <meta name="color-scheme" content="dark" />
-<meta name="theme-color" content="#16181b" />
+<meta name="theme-color" content="#121417" />
+<meta name="description" content="Match-3 на едва различимых оттенках: измерь порог цветовосприятия и узнай, сколько цветов различаешь именно ты." />
+<meta property="og:title" content="ОТТЕНОК — сколько цветов различаешь ты?" />
+<meta property="og:description" content="Match-3 на едва различимых оттенках. Калибровка зрения, научная оценка порога, таблица рекордов." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23121417'/%3E%3Crect x='8' y='8' width='22' height='22' rx='6' fill='%235ec8bb'/%3E%3Crect x='34' y='8' width='22' height='22' rx='6' fill='%2352b4a8'/%3E%3Crect x='8' y='34' width='22' height='22' rx='6' fill='%2358beb1'/%3E%3Crect x='34' y='34' width='22' height='22' rx='6' fill='%234dab9f'/%3E%3C/svg%3E" />
 <title>ОТТЕНОК — тренажёр цветового зрения</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +29,8 @@
     --sans:ui-sans-serif,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%}
+  html,body{margin:0;height:100%;overscroll-behavior:none}
+  html{overflow-x:hidden}
   body{font-family:var(--sans);color:var(--ink);min-height:100%;
     background-color:#121417;
     background-image:radial-gradient(120% 80% at 50% -10%, #20242a 0%, var(--bg) 45%, var(--bg2) 100%);
@@ -65,7 +72,8 @@
 
   /* ---------- ИГРА ---------- */
   .layout{display:grid;grid-template-columns:minmax(0,1fr) 332px;gap:20px;align-items:start}
-  @media(max-width:860px){.layout{grid-template-columns:1fr}}
+  @media(max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
+  .stage,.layout>aside{min-width:0;max-width:100%}
   .stage{position:relative}
   .matlabel{display:flex;justify-content:space-between;align-items:center;margin:0 4px 8px;
     font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
@@ -116,7 +124,7 @@
   .diffmeter .dm-word{font-size:13.5px;color:var(--ink);font-weight:600}
   .diffmeter .dm-d{font-family:var(--mono);font-size:10.5px;color:var(--accent);white-space:nowrap}
   .diffmeter .dm-track{position:relative;height:9px;border-radius:99px;background-color:#2a2f35}
-  .diffmeter .dm-track i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background-image:linear-gradient(90deg,#3a8f84,#e7c06a 70%,#e4837a);transition:width .4s}
+  .diffmeter .dm-track i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background-image:linear-gradient(90deg,var(--accent-dim),var(--accent));transition:width .4s}
   .diffmeter .dm-track b{position:absolute;top:-3px;width:3px;height:15px;background-color:#fff;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px rgba(0,0,0,.4);transition:left .4s;z-index:2}
   .diffmeter .dm-ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--faint);text-transform:uppercase}
   .labrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -246,15 +254,83 @@
   .hidden{display:none!important}
   .mini{font-size:11.5px;color:var(--faint);text-align:center;margin-top:13px;line-height:1.5}
 
+  /* единая числовая типографика: показания — гротеск 800, табличные цифры */
+  .big,.bignum,.clock,.stat .v,.rv{font-family:var(--sans);font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .rv{font-size:22px;line-height:1;color:var(--ink)}
+  .statline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:9px}
+  .statline .hearts,.statline .clock{margin-top:0}
+  .prog{margin-top:13px}
+  .progtop{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .progtop b{color:var(--ink);font-weight:700;letter-spacing:.04em}
+  .bar.slim{height:5px;margin-top:0}
+  .kvline{display:flex;flex-wrap:wrap;gap:9px 16px;margin-top:9px}
+  .kv span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .kv b{font-family:var(--sans);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums}
+  .colcard{display:flex;flex-direction:column}
+  .colcard .sub{margin-bottom:12px}
+  .colcard .bar{margin-top:auto}
+  .help-strip{transition:opacity .45s ease,max-height .45s ease,margin .45s ease;max-height:120px}
+  .help-strip.gone{opacity:0;max-height:0;margin-top:0;overflow:hidden}
+  .btn{font-weight:600}
+  .btn:focus-visible,.mode:focus-visible,.qbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+  button:focus-visible,.mode:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
   @media(max-width:640px){
-    body{padding:12px 12px 18px}
-    .brand p{font-size:14px}
-    .btn{font-size:14px;padding:10px 14px}
-    .mode p{min-height:0;font-size:14px}
-    .mode h3{font-size:23px}
-    .help-strip{font-size:13.5px}
-    .card{padding:22px 18px}
-    .bignum{font-size:40px}
+    body{padding:10px 10px calc(14px + env(safe-area-inset-bottom))}
+    header{margin-bottom:10px;gap:10px}
+    .brand h1{font-size:26px}
+    .brand p{display:none}
+    .btn{font-size:13px;padding:9px 12px}
+    .mode{padding:16px 16px 14px}
+    .mode .ico{width:36px;height:36px;margin-bottom:10px}
+    .mode p{min-height:0;font-size:13.5px}
+    .mode h3{font-size:21px}
+    .menu-foot{font-size:11.5px}
+    /* игра: компактный экран */
+    .layout{gap:10px}
+    .levelband{gap:8px;margin:0 0 8px}
+    .lvlbadge{min-width:62px;padding:6px 9px;border-radius:11px}
+    .lvlbadge .lvlnum{font-size:21px}
+    .lvlbadge.wide{min-width:102px}
+    .lvlbadge.wide .lvlnum{font-size:14px}
+    .diffmeter{padding:7px 10px;gap:5px;border-radius:11px}
+    .diffmeter .dm-word{font-size:11.5px}
+    .diffmeter .dm-d{font-size:9px}
+    .diffmeter .dm-ends{display:none}
+    .board{gap:4px;padding:7px;border-radius:12px}
+    .t{border-radius:7px}
+    .help-strip{font-size:12px;line-height:1.45}
+    aside{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .panel{padding:11px 12px 12px;border-radius:13px}
+    .panel+.panel{margin-top:0}
+    .botpanel{grid-column:1/-1}
+    .controls{grid-column:1/-1;margin-top:0}
+    .controls .btn{padding:11px 8px;font-size:13px}
+    .lab{font-size:8.5px;letter-spacing:.14em}
+    .labrow{gap:6px}
+    .big{font-size:20px;margin:6px 0 2px}
+    .sub{font-size:10.5px}
+    .bar{height:5px;margin-top:8px}
+    .cav{display:none}
+    .stat .v{font-size:16px}
+    .clock{font-size:30px}
+    .pip{width:13px;height:13px}
+    .rv{font-size:19px}
+    .kv b{font-size:14px}
+    .progtop{font-size:9px}
+    .minibtns{flex-wrap:wrap;margin-top:10px}
+    .minibtns .btn{flex:1 1 45%;font-size:11.5px;padding:8px 6px}
+    .bot{gap:9px}
+    .avatar{width:30px;height:30px;border-radius:9px}
+    .bot .name{font-size:9px}
+    .bot .msg{font-size:12.5px;line-height:1.45;min-height:0;margin-top:3px}
+    .hues{gap:5px;margin-top:9px}
+    .reveal{top:10px}
+    .card{padding:20px 16px}
+    .bignum{font-size:38px}
   }
 </style>
 </head>
@@ -293,7 +369,7 @@
       </button>
     </div>
     <div class="menu-foot">
-      <span>Цвета сгенерированы в OKLab — разница между плитками перцептивно равномерна.</span>
+      <span>Цвета сгенерированы в OKLab — разница между плитками перцептивно равномерна. <b style="color:var(--faint);font-weight:600">v1.4</b></span>
       <button class="btn ghost" id="howBtn2">Как играть</button>
     </div>
   </section>
@@ -313,10 +389,10 @@
         <div class="board" id="board"></div>
         <div class="fx" id="fx"></div>
       </div>
-      <div class="help-strip">Выдели две <b>соседние</b> плитки одного цвета и поменяй их местами, чтобы собрать 3+ в ряд. Цвета почти одинаковые — присмотрись.</div>
+      <div class="help-strip" id="helpStrip">Выдели две <b>соседние</b> плитки одного цвета и поменяй их местами, чтобы собрать 3+ в ряд. Цвета почти одинаковые — присмотрись.</div>
     </div>
     <aside>
-      <div class="panel">
+      <div class="panel colcard">
         <div class="lab labrow">Цветов различаешь<button class="qbtn" id="howCalc" aria-label="как считается">?</button></div>
         <div class="big" id="colorsNum">— </div>
         <div class="sub" id="colorsSub">оценка по твоему порогу</div>
@@ -324,7 +400,7 @@
         <div class="cav">оценка, не клинический тест · зависит от экрана и освещения</div>
       </div>
       <div class="panel" id="statusCard"></div>
-      <div class="panel">
+      <div class="panel botpanel">
         <div class="bot">
           <div class="avatar"></div>
           <div style="flex:1">
@@ -348,6 +424,15 @@
 
 <script>
 "use strict";
+/* ===================== Telegram Mini App ===================== */
+(function(){try{
+  var tg=window.Telegram&&window.Telegram.WebApp;if(!tg)return;
+  tg.ready();
+  try{tg.expand();}catch(e){}
+  try{if(tg.disableVerticalSwipes)tg.disableVerticalSwipes();}catch(e){} /* свайп вниз не закрывает игру */
+  try{if(tg.setHeaderColor)tg.setHeaderColor("#16181b");}catch(e){}
+  try{if(tg.setBackgroundColor)tg.setBackgroundColor("#121417");}catch(e){}
+}catch(e){}})();
 /* ===================== OKLab → sRGB ===================== */
 function oklabToLinear(L,a,b){
   var l_=L+0.3963377774*a+0.2158037573*b,m_=L-0.1055613458*a-0.0638541728*b,s_=L-0.0894841775*a-1.2914855480*b;
@@ -367,6 +452,11 @@ var HUES=[{deg:0,name:"красные"},{deg:35,name:"оранжевые"},{deg:
 function angDist(a,b){var d=Math.abs(a-b)%360;return d>180?360-d:d;}
 function hueBin(deg){var bi=0,bd=999;HUES.forEach(function(H,i){var dd=angDist(deg,H.deg);if(dd<bd){bd=dd;bi=i;}});return bi;}
 function hslCss(deg){return "hsl("+deg+" 52% 56%)";}
+/* Чипы-легенды оттенков — в OKLab: одна воспринимаемая светлота и насыщенность у всех восьми */
+var HUE_OK=[25,55,90,140,185,255,295,330];
+var HUESW=HUE_OK.map(function(deg){var r=deg*Math.PI/180,C=0.11,L=0.66;
+  while(C>0.02&&!inGamut(L,C*Math.cos(r),C*Math.sin(r)))C-=0.005;
+  return oklabHex(L,C*Math.cos(r),C*Math.sin(r));});
 
 /* ===================== константы ===================== */
 var ROWS=8,COLS=8,BASE_DIST=0.055,DECAY=0.88,FLOOR=0.005,TARGET=5;
@@ -517,8 +607,10 @@ async function resolve(){comboCount=0;var guard=0;
 }
 
 /* ===================== данные / оценка ===================== */
+var helpDone=false;
 function onPercept(success){var key=dist.toFixed(4);if(!distBuckets.has(key))distBuckets.set(key,{att:0,suc:0});
   var d=distBuckets.get(key);d.att++;if(success)d.suc++;var h=hueStats[curHueBin];h.att++;if(success)h.suc++;
+  if(success&&!helpDone){helpDone=true;var hs=document.getElementById("helpStrip");if(hs)hs.classList.add("gone");}
   if(mode==="personal"&&!calMode){
     trainWindow.push(!!success);if(trainWindow.length>10)trainWindow.shift();
     if(success){trainStreak++;if(trainStreak>trainBest)trainBest=trainStreak;}else trainStreak=0;
@@ -578,8 +670,8 @@ function hueRecapHTML(){
   hueStats.forEach(function(h,i){if(h.att>=3){var r=h.suc/h.att;if(r>sb){sb=r;strong=i;}if(r<wb){wb=r;weak=i;}}});
   if(strong===null||weak===null||strong===weak)return "";
   return '<div class="recap">'+
-    '<div class="chip"><span class="sw" style="background:'+hslCss(HUES[strong].deg)+'"></span>сильные: '+HUES[strong].name+'</div>'+
-    '<div class="chip"><span class="sw" style="background:'+hslCss(HUES[weak].deg)+'"></span>сложнее: '+HUES[weak].name+'</div></div>';}
+    '<div class="chip"><span class="sw" style="background:'+HUESW[strong]+'"></span>сильные: '+HUES[strong].name+'</div>'+
+    '<div class="chip"><span class="sw" style="background:'+HUESW[weak]+'"></span>сложнее: '+HUES[weak].name+'</div></div>';}
 
 /* ===================== бот ===================== */
 function botSay(){var colors=roundSig(estColors(resolvedDist()),3);var strong=null,weak=null,sb=-1,wb=2;
@@ -605,7 +697,7 @@ function botCoach(){
   document.getElementById("botMsg").innerHTML=msg;}
 
 /* ===================== UI ===================== */
-function fmt(n){return n.toLocaleString("ru-RU").replace(/\u00A0/g," ");}
+function fmt(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,"\u202F");}
 var shownColors=0;
 function animateNumber(el,to){var from=shownColors,dur=600,t0=performance.now();
   function step(now){var k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3),v=Math.round(from+(to-from)*e);el.textContent=fmt(v);if(k<1)requestAnimationFrame(step);else shownColors=to;}
@@ -614,29 +706,27 @@ function mmss(s){var m=Math.floor(s/60),x=s%60;return m+":"+String(x).padStart(2
 function updateClock(){var el=document.getElementById("clockEl");if(!el)return;el.textContent=mmss(Math.max(0,timeLeft));el.classList.toggle("low",timeLeft<=15);}
 
 function renderStatus(){var el=document.getElementById("statusCard");
+  var prog='<div class="prog"><div class="progtop"><span>до повышения</span><b>'+levelProgress+' / '+TARGET+'</b></div>'+
+    '<div class="bar slim"><i style="width:'+(levelProgress/TARGET*100)+'%"></i></div></div>';
   if(mode==="time"){
-    el.innerHTML='<div class="lab">Осталось времени</div><div class="clock" id="clockEl">'+mmss(timeLeft)+'</div>'+
-      '<div class="srow" style="margin-top:12px"><div class="stat"><div class="lab">Уровень</div><div class="v">'+level+'</div></div>'+
-      '<div class="stat"><div class="lab">Очки</div><div class="v">'+fmt(score)+'</div></div></div>';
+    el.innerHTML='<div class="labrow"><span class="lab">Время</span><span class="lab">Очки</span></div>'+
+      '<div class="statline"><div class="clock" id="clockEl">'+mmss(timeLeft)+'</div><div class="rv">'+fmt(score)+'</div></div>'+prog;
   }else if(mode==="endless"){
     var livesN=MODES.endless.lives;var pips="";for(var i=0;i<livesN;i++)pips+='<div class="pip'+(i<errors?" lost":"")+'"></div>';
-    el.innerHTML='<div class="lab">Жизни</div><div class="hearts">'+pips+'</div>'+
-      '<div class="srow" style="margin-top:14px"><div class="stat"><div class="lab">Уровень</div>'+
-      '<div class="ringwrap"><div class="ring" style="--p:'+(levelProgress/TARGET*100)+'"><span>'+level+'</span></div>'+
-      '<div><div class="v" style="font-size:14px;color:var(--muted)">'+levelProgress+' / '+TARGET+'</div><div class="lab" style="margin-top:3px">до повышения</div></div></div></div>'+
-      '<div class="stat"><div class="lab">Очки</div><div class="v">'+fmt(score)+'</div></div></div>';
+    el.innerHTML='<div class="labrow"><span class="lab">Жизни</span><span class="lab">Очки</span></div>'+
+      '<div class="statline"><div class="hearts">'+pips+'</div><div class="rv">'+fmt(score)+'</div></div>'+prog;
   }else if(mode==="personal"&&calMode){
-    el.innerHTML='<div class="lab">Калибровка зрения</div><div class="big" style="font-size:30px">'+calRevs.length+' / '+CAL.revNeed+'</div>'+
+    el.innerHTML='<div class="lab">Калибровка зрения</div><div class="big" style="font-size:28px">'+calRevs.length+' / '+CAL.revNeed+'</div>'+
       '<div class="sub">точек разворота · попытка '+(calTrials+1)+' из '+CAL.maxTrials+'</div>'+
       '<div class="bar"><i style="width:'+Math.min(100,calRevs.length/CAL.revNeed*100)+'%"></i></div>'+
       '<div class="lab" style="margin-top:12px">Сейчас Δ '+dist.toFixed(3)+'</div>';
   }else if(mode==="personal"){
     var acc=Math.round(sessionAcc()*100);
-    el.innerHTML='<div class="lab">Тренировка на твоём пороге</div>'+
-      '<div class="srow" style="margin-top:8px">'+
-      '<div class="stat"><div class="lab">Порог Δ</div><div class="v" style="font-size:17px">'+(trainingDist!=null?trainingDist.toFixed(3):"—")+'</div></div>'+
-      '<div class="stat"><div class="lab">Точность</div><div class="v">'+acc+'%</div></div>'+
-      '<div class="stat"><div class="lab">Серия</div><div class="v">'+trainStreak+'</div></div></div>'+
+    el.innerHTML='<div class="lab">Тренировка на пороге</div>'+
+      '<div class="kvline">'+
+      '<div class="kv"><span>порог Δ</span><b>'+(trainingDist!=null?trainingDist.toFixed(3):"—")+'</b></div>'+
+      '<div class="kv"><span>точность</span><b>'+acc+'%</b></div>'+
+      '<div class="kv"><span>серия</span><b>'+trainStreak+'</b></div></div>'+
       '<div class="minibtns"><button class="btn" id="easierBtn">Легче</button><button class="btn" id="harderBtn">Сложнее</button></div>'+
       '<div class="minibtns"><button class="btn" id="recalBtn" style="flex:1">Перекалибровать</button></div>';
     var eb=document.getElementById("easierBtn"),hb=document.getElementById("harderBtn"),rb=document.getElementById("recalBtn");
@@ -657,7 +747,7 @@ function updateUI(){
     var fill=clamp((Math.log(raw)-Math.log(100000))/(Math.log(20000000)-Math.log(100000))*100,0,100);
     cb.style.width=fill+"%";
     if(cs){if(raw>=COLOR_ANCHOR_E)cs.innerHTML="≈ <b>"+(raw/COLOR_ANCHOR_E).toFixed(1).replace(".",",")+"×</b> среднего человека";
-      else cs.innerHTML="≈ <b>"+Math.round(raw/COLOR_ANCHOR_E*100)+"%</b> от среднего (≈ 2,3 млн)";}
+      else cs.innerHTML="≈ <b>"+Math.round(raw/COLOR_ANCHOR_E*100)+"%</b> от среднего человека";}
   }
   renderStatus();renderHues();
 }
@@ -679,7 +769,7 @@ function updateBand(){
 }
 function renderHues(){var el=document.getElementById("hues");
   el.innerHTML=HUES.map(function(H,i){var h=hueStats[i],rate=h.att>0?h.suc/h.att:0,nd=h.att===0?" nodata":"";
-    return '<div class="hue'+nd+'" title="'+H.name+': '+(h.att?Math.round(rate*100)+"%":"нет данных")+'"><div class="sw" style="background:'+hslCss(H.deg)+'"></div><div class="hb"><i style="width:'+(h.att?rate*100:0)+'%"></i></div></div>';}).join("");}
+    return '<div class="hue'+nd+'" title="'+H.name+': '+(h.att?Math.round(rate*100)+"%":"нет данных")+'"><div class="sw" style="background:'+HUESW[i]+'"></div><div class="hb"><i style="width:'+(h.att?rate*100:0)+'%"></i></div></div>';}).join("");}
 
 function afterMove(){movesSinceBot++;
   if(mode==="personal"){trainMoves++;updateUI();if(movesSinceBot>=4){botCoach();movesSinceBot=0;}return;}
